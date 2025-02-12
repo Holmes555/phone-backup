@@ -1,7 +1,5 @@
 @echo off
 set EXTERNAL_DRIVE=R:\
-set PHOTO_BACKUP_DIR=%EXTERNAL_DRIVE%\Destination\Photo\Dir
-set DOWNLOAD_BACKUP_DIR=%EXTERNAL_DRIVE%\Destination\Download\Dir
 set PHOTO_PHONE_DIR=/sdcard/DCIM/Camera
 set DOWNLOAD_PHONE_DIR=/sdcard/Download
 
@@ -35,6 +33,13 @@ if %DEVICE_FOUND%==0 (
     pause
     exit /b 1
 )
+
+REM Ask user for phone name
+set /p PHONE_NAME="Enter your phone name: "
+
+REM Create destination directories using phone name
+set PHOTO_BACKUP_DIR=%EXTERNAL_DRIVE%\Destination\Photo\Dir\%PHONE_NAME%
+set DOWNLOAD_BACKUP_DIR=%EXTERNAL_DRIVE%\Destination\Download\Dir\%PHONE_NAME%
 
 echo ================================
 echo  Choose folders to pull from phone
