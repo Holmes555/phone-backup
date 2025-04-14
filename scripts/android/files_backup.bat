@@ -58,11 +58,11 @@ for %%y in ("1", "") do (
         REM List files in the source directory and pull them individually with progress indication
         echo [INFO] %DATE% %TIME% - Starting incremental backup for photos folder...
         echo [INFO] Pulling new files from phone...
-        for /f "delims=" %%F in ('adb shell ls "%PHOTO_PHONE_DIR%"') do (
+        for /f "delims=" %%F in ('adb shell ls '%PHOTO_PHONE_DIR%'') do (
             REM Check if the file already exists locally and compare timestamps
             if exist "%PHOTO_BACKUP_DIR%\%%F" (
                 REM Compare timestamps (you could also compare sizes or other attributes)
-                for /f "delims=" %%T in ('adb shell stat -c %%s "%PHOTO_PHONE_DIR%/%%F"') do (
+                for /f "delims=" %%T in ('adb shell stat -c %%s '%PHOTO_PHONE_DIR%/%%F'') do (
                     set PHONE_SIZE=%%T
                 )
                 for /f "delims=" %%T in ('dir "%PHOTO_BACKUP_DIR%\%%F" ^| findstr /i "%%F"') do (
@@ -101,11 +101,11 @@ for %%y in ("2", "") do (
         REM List files in the source directory and pull them individually with progress indication
         echo [INFO] %DATE% %TIME% - Starting incremental backup for download folder...
         echo [INFO] Pulling new files from phone...
-        for /f "delims=" %%F in ('adb shell ls "%DOWNLOAD_PHONE_DIR%"') do (
+        for /f "delims=" %%F in ('adb shell ls '%DOWNLOAD_PHONE_DIR%'') do (
             REM Check if the file already exists locally and compare timestamps
             if exist "%DOWNLOAD_BACKUP_DIR%\%%F" (
                 REM Compare timestamps (you could also compare sizes or other attributes)
-                for /f "delims=" %%T in ('adb shell stat -c %%s "%DOWNLOAD_PHONE_DIR%/%%F"') do (
+                for /f "delims=" %%T in ('adb shell stat -c %%s '%DOWNLOAD_PHONE_DIR%/%%F'') do (
                     set PHONE_SIZE=%%T
                 )
                 for /f "delims=" %%T in ('dir "%DOWNLOAD_BACKUP_DIR%\%%F" ^| findstr /i "%%F"') do (
