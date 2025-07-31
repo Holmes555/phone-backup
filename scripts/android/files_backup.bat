@@ -81,10 +81,10 @@ for %%y in ("1", "") do (
             for /f "tokens=1" %%D in ('adb shell stat -c %%y '%PHOTO_PHONE_DIR%/%%F'') do (
                 set PHONE_DATE=%%D
             )
-            set "PHONE_DATE=%PHONE_DATE:~0,10%"
+            set "PHONE_DATE=!PHONE_DATE:~0,10!"
             
             REM Only process files newer than last backup date
-            if "%PHONE_DATE%" gtr "%LAST_BACKUP_DATE%" (
+            if "!PHONE_DATE!" gtr "%LAST_BACKUP_DATE%" (
                 REM Check if the file already exists locally and compare timestamps
                 if exist "%PHOTO_BACKUP_DIR%\%%F" (
                     REM Compare timestamps (you could also compare sizes or other attributes)
@@ -108,7 +108,7 @@ for %%y in ("1", "") do (
                     adb pull -a "%PHOTO_PHONE_DIR%/%%F" "%PHOTO_BACKUP_DIR%\%%F"
                 )
             ) else (
-                echo [INFO] File %%F (date: %PHONE_DATE%) is older than cutoff, skipping...
+                echo [INFO] File %%F (date: !PHONE_DATE!) is older than cutoff, skipping...
             )
         )
         
@@ -135,10 +135,10 @@ for %%y in ("2", "") do (
             for /f "tokens=1" %%D in ('adb shell stat -c %%y '%DOWNLOAD_PHONE_DIR%/%%F'') do (
                 set PHONE_DATE=%%D
             )
-            set "PHONE_DATE=%PHONE_DATE:~0,10%"
+            set "PHONE_DATE=!PHONE_DATE:~0,10!"
             
             REM Only process files newer than last backup date
-            if "%PHONE_DATE%" gtr "%LAST_BACKUP_DATE%" (
+            if "!PHONE_DATE!" gtr "%LAST_BACKUP_DATE%" (
                 REM Check if the file already exists locally and compare timestamps
                 if exist "%DOWNLOAD_BACKUP_DIR%\%%F" (
                     REM Compare timestamps (you could also compare sizes or other attributes)
@@ -162,7 +162,7 @@ for %%y in ("2", "") do (
                     adb pull -a "%DOWNLOAD_PHONE_DIR%/%%F" "%DOWNLOAD_BACKUP_DIR%\%%F"
                 )
             ) else (
-                echo [INFO] File %%F (date: %PHONE_DATE%) is older than cutoff, skipping...
+                echo [INFO] File %%F (date: !PHONE_DATE!) is older than cutoff, skipping...
             )
         )
         
