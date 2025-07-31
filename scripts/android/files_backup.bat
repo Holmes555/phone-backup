@@ -1,4 +1,6 @@
 @echo off
+setlocal enabledelayedexpansion
+
 set EXTERNAL_DRIVE=R:\
 set PHOTO_PHONE_DIR=/sdcard/DCIM/Camera
 set DOWNLOAD_PHONE_DIR=/sdcard/Download
@@ -38,8 +40,24 @@ REM Ask user for phone name
 set /p PHONE_NAME="Enter your phone name: "
 
 REM Create destination directories using phone name
-set PHOTO_BACKUP_DIR=%EXTERNAL_DRIVE%\Destination\Photo\Dir\%PHONE_NAME%
-set DOWNLOAD_BACKUP_DIR=%EXTERNAL_DRIVE%\Destination\Download\Dir\%PHONE_NAME%
+set PHOTO_BACKUP_DIR=%EXTERNAL_DRIVE%\Destination\Photo\%PHONE_NAME%
+set DOWNLOAD_BACKUP_DIR=%EXTERNAL_DRIVE%\Destination\Phone\%PHONE_NAME%\Download
+set LAST_BACKUP_FILE=%EXTERNAL_DRIVE%\Destination\Phone\%PHONE_NAME%\last_backup_date.txt
+
+REM Get last backup date or ask user for cutoff date
+if exist "%LAST_BACKUP_FILE%" (
+    for /f "delims=" %%D in ('type "%LAST_BACKUP_FILE%"') do set LAST_BACKUP_DATE=%%D
+    echo [INFO] Last backup was on: %LAST_BACKUP_DATE%
+    echo [INFO] Will only copy files newer than this date.
+) else (
+    echo [INFO] No previous backup found. Enter a cutoff date (YYYY-MM-DD) or press Enter for all files:
+    set /p CUTOFF_DATE="Cutoff date (YYYY-MM-DD): "
+    if not "!CUTOFF_DATE!"=="" (
+        set LAST_BACKUP_DATE=!CUTOFF_DATE!
+    ) else (
+        set LAST_BACKUP_DATE=1970-01-01
+    )
+)
 
 echo ================================
 echo  Choose folders to pull from phone
@@ -59,27 +77,38 @@ for %%y in ("1", "") do (
         echo [INFO] %DATE% %TIME% - Starting incremental backup for photos folder...
         echo [INFO] Pulling new files from phone...
         for /f "delims=" %%F in ('adb shell ls '%PHOTO_PHONE_DIR%'') do (
-            REM Check if the file already exists locally and compare timestamps
-            if exist "%PHOTO_BACKUP_DIR%\%%F" (
-                REM Compare timestamps (you could also compare sizes or other attributes)
-                for /f "delims=" %%T in ('adb shell stat -c %%s '%PHOTO_PHONE_DIR%/%%F'') do (
-                    set PHONE_SIZE=%%T
-                )
-                for /f "delims=" %%T in ('dir "%PHOTO_BACKUP_DIR%\%%F" ^| findstr /i "%%F"') do (
-                    set LOCAL_SIZE=%%T
-                )
-        
-                REM If file sizes are different, pull the file
-                if not "%PHONE_SIZE%"=="%LOCAL_SIZE%" (
-                    echo [INFO] File %%F has been modified, pulling...
-                    adb pull -a "%PHOTO_PHONE_DIR%/%%F" "%PHOTO_BACKUP_DIR%\%%F"
+            REM Check file date first
+            for /f "tokens=1" %%D in ('adb shell stat -c %%y '%PHOTO_PHONE_DIR%/%%F'') do (
+                set PHONE_DATE=%%D
+            )
+            set "PHONE_DATE=%PHONE_DATE:~0,10%"
+            
+            REM Only process files newer than last backup date
+            if "%PHONE_DATE%" gtr "%LAST_BACKUP_DATE%" (
+                REM Check if the file already exists locally and compare timestamps
+                if exist "%PHOTO_BACKUP_DIR%\%%F" (
+                    REM Compare timestamps (you could also compare sizes or other attributes)
+                    for /f "delims=" %%T in ('adb shell stat -c %%s '%PHOTO_PHONE_DIR%/%%F'') do (
+                        set PHONE_SIZE=%%T
+                    )
+                    for /f "delims=" %%T in ('dir "%PHOTO_BACKUP_DIR%\%%F" ^| findstr /i "%%F"') do (
+                        set LOCAL_SIZE=%%T
+                    )
+            
+                    REM If file sizes are different, pull the file
+                    if not "%PHONE_SIZE%"=="%LOCAL_SIZE%" (
+                        echo [INFO] File %%F has been modified, pulling...
+                        adb pull -a "%PHOTO_PHONE_DIR%/%%F" "%PHOTO_BACKUP_DIR%\%%F"
+                    ) else (
+                        echo [INFO] File %%F is up to date.
+                    )
                 ) else (
-                    echo [INFO] File %%F is up to date.
+                    REM If file doesn't exist, pull it
+                    echo [INFO] New file %%F, pulling...
+                    adb pull -a "%PHOTO_PHONE_DIR%/%%F" "%PHOTO_BACKUP_DIR%\%%F"
                 )
             ) else (
-                REM If file doesn't exist, pull it
-                echo [INFO] New file %%F, pulling...
-                adb pull -a "%PHOTO_PHONE_DIR%/%%F" "%PHOTO_BACKUP_DIR%\%%F"
+                echo [INFO] File %%F (date: %PHONE_DATE%) is older than cutoff, skipping...
             )
         )
         
@@ -102,27 +131,38 @@ for %%y in ("2", "") do (
         echo [INFO] %DATE% %TIME% - Starting incremental backup for download folder...
         echo [INFO] Pulling new files from phone...
         for /f "delims=" %%F in ('adb shell ls '%DOWNLOAD_PHONE_DIR%'') do (
-            REM Check if the file already exists locally and compare timestamps
-            if exist "%DOWNLOAD_BACKUP_DIR%\%%F" (
-                REM Compare timestamps (you could also compare sizes or other attributes)
-                for /f "delims=" %%T in ('adb shell stat -c %%s '%DOWNLOAD_PHONE_DIR%/%%F'') do (
-                    set PHONE_SIZE=%%T
-                )
-                for /f "delims=" %%T in ('dir "%DOWNLOAD_BACKUP_DIR%\%%F" ^| findstr /i "%%F"') do (
-                    set LOCAL_SIZE=%%T
-                )
-        
-                REM If file sizes are different, pull the file
-                if not "%PHONE_SIZE%"=="%LOCAL_SIZE%" (
-                    echo [INFO] File %%F has been modified, pulling...
-                    adb pull -a "%DOWNLOAD_PHONE_DIR%/%%F" "%DOWNLOAD_BACKUP_DIR%\%%F"
+            REM Check file date first
+            for /f "tokens=1" %%D in ('adb shell stat -c %%y '%DOWNLOAD_PHONE_DIR%/%%F'') do (
+                set PHONE_DATE=%%D
+            )
+            set "PHONE_DATE=%PHONE_DATE:~0,10%"
+            
+            REM Only process files newer than last backup date
+            if "%PHONE_DATE%" gtr "%LAST_BACKUP_DATE%" (
+                REM Check if the file already exists locally and compare timestamps
+                if exist "%DOWNLOAD_BACKUP_DIR%\%%F" (
+                    REM Compare timestamps (you could also compare sizes or other attributes)
+                    for /f "delims=" %%T in ('adb shell stat -c %%s '%DOWNLOAD_PHONE_DIR%/%%F'') do (
+                        set PHONE_SIZE=%%T
+                    )
+                    for /f "delims=" %%T in ('dir "%DOWNLOAD_BACKUP_DIR%\%%F" ^| findstr /i "%%F"') do (
+                        set LOCAL_SIZE=%%T
+                    )
+            
+                    REM If file sizes are different, pull the file
+                    if not "%PHONE_SIZE%"=="%LOCAL_SIZE%" (
+                        echo [INFO] File %%F has been modified, pulling...
+                        adb pull -a "%DOWNLOAD_PHONE_DIR%/%%F" "%DOWNLOAD_BACKUP_DIR%\%%F"
+                    ) else (
+                        echo [INFO] File %%F is up to date.
+                    )
                 ) else (
-                    echo [INFO] File %%F is up to date.
+                    REM If file doesn't exist, pull it
+                    echo [INFO] New file %%F, pulling...
+                    adb pull -a "%DOWNLOAD_PHONE_DIR%/%%F" "%DOWNLOAD_BACKUP_DIR%\%%F"
                 )
             ) else (
-                REM If file doesn't exist, pull it
-                echo [INFO] New file %%F, pulling...
-                adb pull -a "%DOWNLOAD_PHONE_DIR%/%%F" "%DOWNLOAD_BACKUP_DIR%\%%F"
+                echo [INFO] File %%F (date: %PHONE_DATE%) is older than cutoff, skipping...
             )
         )
         
@@ -132,9 +172,13 @@ for %%y in ("2", "") do (
             exit /b 1
         )
         
-        echo [SUCCESS] %DATE% %TIME% - Backup downloads complete! Files saved to: %DOWNLOADS_BACKUP_DIR%
+        echo [SUCCESS] %DATE% %TIME% - Backup downloads complete! Files saved to: %DOWNLOAD_BACKUP_DIR%
     )
 )
+
+REM Update last backup date
+echo %DATE% > "%LAST_BACKUP_FILE%"
+echo [INFO] Updated last backup date to: %DATE%
 
 pause
 exit /b 0
