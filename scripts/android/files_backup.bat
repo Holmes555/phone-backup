@@ -119,12 +119,6 @@ for %%y in ("1", "") do (
             )
         )
         
-        if %ERRORLEVEL% NEQ 0 (
-            echo [ERROR] %DATE% %TIME% - ADB pull failed! Check your phone connection.
-            pause
-            exit /b 1
-        )
-        
         echo [SUCCESS] %DATE% %TIME% - Backup photos complete! Files saved to: %PHOTO_BACKUP_DIR%
     )
 )
@@ -173,19 +167,23 @@ for %%y in ("2", "") do (
             )
         )
         
-        if %ERRORLEVEL% NEQ 0 (
-            echo [ERROR] %DATE% %TIME% - ADB pull failed! Check your phone connection.
-            pause
-            exit /b 1
-        )
-        
         echo [SUCCESS] %DATE% %TIME% - Backup downloads complete! Files saved to: %DOWNLOAD_BACKUP_DIR%
     )
 )
 
+REM Get current date in DD.MM.YYYY format
+for /f "tokens=1-3 delims=." %%A in ("%DATE%") do (
+    set "DD=%%A"
+    set "MM=%%B"
+    set "YYYY=%%C"
+)
+
+REM Format to ISO
+set "ISO_DATE=!YYYY!-!MM!-!DD!"
+
 REM Update last backup date
-echo %DATE% > "%LAST_BACKUP_FILE%"
-echo [INFO] Updated last backup date to: %DATE%
+echo !ISO_DATE! > "%LAST_BACKUP_FILE%"
+echo [INFO] Updated last backup date to: !ISO_DATE!
 
 pause
 exit /b 0
