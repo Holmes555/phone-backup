@@ -1,6 +1,8 @@
 ﻿@echo off
+setlocal enabledelayedexpansion
+
 set INTERNAL_DRIVE=D:\
-set OBSIDIAN_SYNC_DIR="%INTERNAL_DRIVE%\Obsidian"
+set OBSIDIAN_SYNC_DIR=%INTERNAL_DRIVE%\Obsidian
 set OBSIDIAN_PHONE_DIR=/sdcard/Documents/Obsidian
 
 REM Check if the phone is connected and authorized
@@ -43,12 +45,12 @@ for /f "delims=" %%F in ('adb shell ls '%OBSIDIAN_PHONE_DIR%'') do (
         for /f "delims=" %%T in ('adb shell stat -c %%s '%OBSIDIAN_PHONE_DIR%/%%F'') do (
             set PHONE_SIZE=%%T
         )
-        for /f "delims=" %%T in ('dir "%OBSIDIAN_SYNC_DIR%\%%F" ^| findstr /i "%%F"') do (
-            set LOCAL_SIZE=%%T
+        for %%L in ("%OBSIDIAN_SYNC_DIR%\%%F") do (
+            set LOCAL_SIZE=%%~zL
         )
 
         REM If file sizes are different, pull the file
-        if not "%PHONE_SIZE%"=="%LOCAL_SIZE%" (
+        if not "!PHONE_SIZE!"=="!LOCAL_SIZE!" (
             echo [INFO] File %%F has been modified, pulling...
             adb pull -a "%OBSIDIAN_PHONE_DIR%/%%F" "%OBSIDIAN_SYNC_DIR%\%%F"
         ) else (
